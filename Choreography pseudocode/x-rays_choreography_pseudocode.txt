@@ -1,0 +1,439 @@
+	enum MsgStatus {DISABLED, ENABLED}
+	
+	enum ChoreographyState {INIT, RUNNING, MSG_WAITING, COMPLETED, DEADLOCKED}
+	
+	// The addresses of the participants are hardcoded in the smart contract
+	private address patient = 0x9bAAf595...;
+	private address radiology = 0x2BBc833C...;
+	private address ward = 0x7HBf634F...;
+	
+	// State of the choreography instance
+	private ChoreographyeState chorState = ChoreographyState.INIT;
+
+	// Execution state function
+	private int e0 = 1;
+	private int e1 = 0;
+	private int e2 = 0;
+	private int e3 = 0;
+	private int e4 = 0;
+	private int e5 = 0;
+	private int e6 = 0;
+	private int e7 = 0;
+	private int e8 = 0;
+	private int e9 = 0;
+	private int e10 = 0;
+	private int e11 = 0;
+	private int e12 = 0;
+	private int e13 = 0;
+	private int e14 = 0;
+	private int e15 = 0;
+	private int e16 = 0;
+	private int e17 = 0;
+	private int e18 = 0;
+	private int e19 = 0;
+	
+	
+	// Message state function
+	private MsgStatus status_appointment = MsgStatus.DISABLED;
+	private String payload_appointment_medicalPrescription;
+	
+	private MsgStatus status_request = MsgStatus.DISABLED;
+	private String payload_request_requestId;
+	
+	private MsgStatus status_response = MsgStatus.DISABLED;
+	private boolean payload_response_accepted;
+	private LocalDate payload_response_date;
+	
+	private MsgStatus status_registration = MsgStatus.DISABLED;
+	private LocalDate payload_registration_date;
+	private String payload_registration_appointmentId;
+	
+	private MsgStatus status_certification = MsgStatus.DISABLED;
+	private String payload_certification_certificationId;
+	
+	private MsgStatus status_temperature = MsgStatus.DISABLED;
+	private double payload_temperature_temp;
+	
+	private MsgStatus status_checkin = MsgStatus.DISABLED;
+	private String payload_checkin_appointmentId;
+	
+	private MsgStatus status_confirmation = MsgStatus.DISABLED;
+	private boolean payload_confirmation_registration;
+	
+	private MsgStatus status_analysis = MsgStatus.DISABLED;
+	private String payload_analysis_report;
+	private String payload_analysis_ticketId;
+	
+	private MsgStatus status_report = MsgStatus.DISABLED;
+	private String payload_report_resultId;
+	
+	private int enabledMessages = 0;
+	
+	
+	// Choreography elements 
+	private boolean start1() {
+		if (e0 > 0) {
+			e0--;
+			e1++;
+			return true;
+		} else {
+			return false;
+		}
+	}
+
+	private boolean takeAppointment() {
+		if (e1 > 0) {
+			e1--;
+			status_appointment = MsgStatus.ENABLED;
+			enabledMessages++;
+			emit MessageEvent(patient,radiology,appointment);
+			return true;
+		} else {
+			return false;
+		}
+	}
+
+	public void appointment(String payload) {
+		if (status_appointment == MsgStatus.ENABLED && msg.sender=patient) {
+			payload_appointment_medicalPrescription = payload;
+			status_appointment = MsgStatus.DISABLED;
+			enabledMessages--;
+			e2++;
+			execute();
+		}
+	}	
+
+	private boolean xor1() {
+		if (e2 > 0) {
+			e2--;
+			e3++;
+			return true;
+		} else if (e6 > 0) {
+			e6--;
+			e3++;
+			return true;
+		} else {
+			return false;
+		}
+	}
+	
+	
+	private boolean checkAvailability() {
+		if (e3 > 0) {
+			e3--;
+			status_request = MsgStatus.ENABLED;
+			enabledMessages++;
+			emit MessageEvent(radiology,ward,request);
+			return true;
+		} else {
+			return false;
+		}
+	}
+
+	public void request(String payload) {
+		if (status_request == MsgStatus.ENABLED && msg.sender==radiology) {
+			payload_request_requestId = payload;
+			status_request = MsgStatus.DISABLED;
+			enabledMessages--;
+			e4++;
+			execute();
+		}
+	}
+	
+	
+	private boolean checkAvailabilityResp() {
+		if (e4 > 0) {
+			e4--;
+			status_response = MsgStatus.ENABLED;
+			enabledMessages++;
+			emit MessageEvent(ward,radiology,response);
+			return true;
+		} else {
+			return false;
+		}
+	}
+
+	public void response(Boolean payload1, LocalDate payload2) {
+		if (status_response == MsgStatus.ENABLED && mesg.sender == ward) {
+			payload_response_accepted = payload1;
+			payload_response_date = payload2
+			status_response = MsgStatus.DISABLED;
+			enabledMessages--;
+			e5++;
+			execute();
+		}
+	}
+	
+	private boolean xor2() {
+		if (e5 > 0 && payload_response_accepted == false) {
+			e5--;
+			e6++;
+			return true;
+		} else if (e5 > 0 && payload_response_accepted == true) {
+			e5--;
+			e7++;
+			return true;
+		} else {
+			return false;
+		}
+	}
+	
+	private boolean confirmAppointment() {
+		if (e7 > 0) {
+			e7--;
+			status_registration = MsgStatus.ENABLED;
+			enabledMessages++;
+			emit MessageEvent(radiology,patient,registration);
+			return true;
+		} else {
+			return false;
+		}
+	}
+
+	public void registration(LocalDate payload1, String payload2) {
+		if (status_registration == MsgStatus.ENABLED && msg.sender==radiology) {
+			payload_registration_date = payload1;
+			payload_registration_appointmentId = payload2;
+			status_registration = MsgStatus.DISABLED;
+			enabledMessages--;
+			e8++;
+			execute();
+		}
+	}
+	
+	private boolean and1() {
+		if (e8 > 0) {
+			e8--;
+			e9++;
+			e10++;
+			return true;
+		} else {
+			return false;
+		}
+	}
+	
+	private boolean checkCertification() {
+		if (e9 > 0) {
+			e9--;
+			status_certification = MsgStatus.ENABLED;
+			enabledMessages++;
+			emit MessageEvent(patient,radiology,certification);
+			return true;
+		} else {
+			return false;
+		}
+	}
+
+	public void certification(String payload) {
+		if (status_certification == MsgStatus.ENABLED && msg.sender=patient) {
+			payload_certification_certificationId = payload;
+			status_certification = MsgStatus.DISABLED;
+			enabledMessages--;
+			e11++;
+			execute();
+		}
+	}
+	
+	private boolean checkTemperature() {
+		if (e10 > 0) {
+			e10--;
+			status_temperature = MsgStatus.ENABLED;
+			enabledMessages++;
+			emit MessageEvent(patient,radiology,temperature);
+			return true;
+		} else {
+			return false;
+		}
+	}
+
+	public void temperature(double payload) {
+		if (status_temperature == MsgStatus.ENABLED && msg.sender==patient) {
+			payload_temperature_temp = payload
+			status_temperature = MsgStatus.DISABLED;
+			enabledMessages--;
+			e12++;
+			execute();
+		}
+	}
+	
+	private boolean and2() {
+		if (e11 > 0 && e12>0) {
+			e11--;
+			e12--;
+			e13++;
+			return true;
+		} else {
+			return false;
+		}
+	}
+	
+
+	private boolean checkIn() {
+		if (e13 > 0) {
+			e13--;
+			status_checkin = MsgStatus.ENABLED;
+			enabledMessages++;
+			emit MessageEvent(patient,radiology,checkin);
+			return true;
+		} else {
+			return false;
+		}
+	}
+
+	public void checkin(String payload) {
+		if (status_checkin == MsgStatus.ENABLED && msg.sender==patient) {
+			payload_checkin_appointmentId = payload;
+			status_checkin = MsgStatus.DISABLED;
+			enabledMessages--;
+			e14++;
+			execute();
+		}
+	}
+	
+	private boolean checkInResp() {
+		if (e14 > 0) {
+			e14--;
+			status_confirmation = MsgStatus.ENABLED;
+			enabledMessages++;
+			emit MessageEvent(radiology,patient,confirmation);
+			return true;
+		} else {
+			return false;
+		}
+	}
+
+	public void confirmation(boolean payload) {
+		if (status_confirmation == MsgStatus.ENABLED && msg.sender==radiology) {
+			payload_confirmation_registration = payload
+			status_confirmation = MsgStatus.DISABLED;
+			enabledMessages--;
+			e15++;
+			execute();
+		}
+	}
+	
+	private boolean xor3() {
+		if (e15 > 0 && payload_confirmation_registration==true) {
+			e15--;
+			e16++;
+			return true;
+		} else if (e15 > 0 && payload_confirmation_registration==false) {
+			e15--;
+			e17++;
+			return true;
+		} else {
+			return false;
+		}
+	}
+	
+	private boolean end1() {
+		if (e17 > 0) {
+			e17--;
+			return true;
+		} else {
+			return false;
+		}
+	}
+	
+	private boolean performXRays() {
+		if (e16 > 0) {
+			e16--;
+			status_analysis = MsgStatus.ENABLED;
+			enabledMessages++;
+			emit MessageEvent(radiology,ward,analysis);
+			return true;
+		} else {
+			return false;
+		}
+	}
+
+	public void analysis(String payload1, String payload2) {
+		if (status_analysis == MsgStatus.ENABLED && msg.sender==radiology) {
+			payload_analysis_report = payload1;
+			payload_analysis_ticketId = payload2;
+			status_analysis = MsgStatus.DISABLED;
+			enabledMessages--;
+			e18++;
+			execute();
+		}
+	}
+	
+	private boolean sendResult() {
+		if (e18 > 0) {
+			e18--;
+			status_report = MsgStatus.ENABLED;
+			enabledMessages++;
+			emit MessageEvent(ward,patient,report);
+			return true;
+		} else {
+			return false;
+		}
+	}
+
+	public void report(String payload) {
+		if (status_report == MsgStatus.ENABLED && msg.sender==ward) {
+			payload_report_resultId = payload;
+			status_report = MsgStatus.DISABLED;
+			enabledMessages--;
+			e19++;
+			execute();
+		}
+	}
+	
+	private boolean end2() {
+		if (e19 > 0) {
+			e19--;
+			return true;
+		} else {
+			return false;
+		}
+	}
+	
+
+	// Auxiliary methods
+	private int getMarking() {
+		return e0+e1+e2+e3+e4+e5+e6+e7+e8+e9+e10+e11+e12+e13+e14+e15+e16+e17+e18+e19;
+	}
+	
+	private boolean executeOneRule() {
+		return start1()
+				|| takeAppointment()
+				|| xor1()
+				|| checkAvailability()
+				|| checkAvailabilityResp()
+				|| xor2()
+				|| confirmAppointment()
+				|| and1()
+				|| checkCertification()
+				|| checkTemperature()
+				|| and2()
+				|| checkIn()
+				|| checkInResp()
+				|| xor3()
+				|| end1()
+				|| performXRays()
+				|| sendResult()
+				|| end2();	
+	}
+	
+
+	// -------------------- MODEL-INDEPENDENT CODE --------------------//
+
+	public void execute() 
+	{
+		chorState = ChoreographyState.RUNNING;
+
+		// The model is executed according to the interleaving semantics
+		while (executeOneRule()) {}
+
+		if (enabledMessages > 0) {
+			chorState = ChoreographyState.MSG_WAITING;
+		} else {
+			if (getMarking()>0) {
+				chorState = ChoreographyState.DEADLOCKED;
+			} else {
+				chorState = ChoreographyState.COMPLETED;
+			}				
+		}
+	}
+
